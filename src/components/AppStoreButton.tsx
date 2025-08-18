@@ -4,12 +4,11 @@ export function AppStoreButton() {
       href="https://apps.apple.com/ro/app/u-krooze/id6740286085"
       target="_blank"
       rel="noopener noreferrer"
-      className="w-full sm:w-auto"
+      className="block w-full"
     >
       <button
         type="button"
-        className="flex items-center justify-center w-[calc(100%+32px)] text-white bg-black h-14 rounded-xl -ml-1"
-
+        className="flex items-center justify-center w-full text-white bg-black h-14 rounded-xl px-6 hover:bg-gray-800 transition-colors duration-200"
       >
         <div className="mr-3">
           <svg viewBox="0 0 384 512" width="30">

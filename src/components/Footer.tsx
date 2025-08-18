@@ -126,6 +126,44 @@ export function Footer() {
           ))}
         </div>
 
+        {/* Badge Images Section */}
+        <div className="px-4 py-6 border-t border-yellow-600">
+          <div className="flex flex-wrap justify-center items-center gap-6">
+            <img 
+              src="./img/badges/veteran.avif" 
+              alt="Veteran Owned Business" 
+              className="h-16 w-auto object-contain"
+            />
+            <img 
+              src="./img/badges/SDVOSB.avif" 
+              alt="Service Disabled Veteran Owned Small Business" 
+              className="h-16 w-auto object-contain"
+            />
+            <img 
+              src="./img/badges/sam.avif" 
+              alt="SAM Registered" 
+              className="h-16 w-auto object-contain"
+            />
+            <a 
+              href="https://www.bbb.org/us//fort-lauderdale/profile/mobility-scooters/u-krooze-llc-0633-92053006" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity duration-200"
+            >
+              <img 
+                src="./img/badges/bbb.avif" 
+                alt="Better Business Bureau" 
+                className="h-16 w-auto object-contain"
+              />
+            </a>
+            <img 
+              src="./img/badges/locally.avif" 
+              alt="Locally Owned" 
+              className="h-16 w-auto object-contain"
+            />
+          </div>
+        </div>
+
         <div className="px-4 py-6 md:flex md:items-center md:justify-between">
           <span className="text-sm text-white dark:white sm:text-center">
             © 2025{" "}
@@ -140,7 +178,6 @@ export function Footer() {
                 key={label}
                 href={href}
                 className="text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                aria-label={label}
               >
                 {svg}
               </a>

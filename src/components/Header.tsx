@@ -25,7 +25,7 @@ const productPaths = [
   {
     name: "Rent a scooter",
     description: "Use the UKrooze app to rent a Scooter nearby within minutes",
-    href: "#",
+    href: "/ukrooze/rent-scooter",
     icon: DevicePhoneMobileIcon,
     key: "rent",
   },
@@ -64,19 +64,19 @@ const routes = [
   },
   {
     name: "Rental Agreement",
-    path: "#",
+    path: "/ukrooze/rental-agreement",
   },
   {
     name: "Support",
-    path: "#",
+    path: "/ukrooze/support",
   },
   {
     name: "Host a Fleet",
     path: "/ukrooze/host-fleet",
   },
   {
-    name: "Contact Us",
-    path: "#",
+    name: "About Us",
+    path: "/ukrooze/about-us",
   },
 ];
 

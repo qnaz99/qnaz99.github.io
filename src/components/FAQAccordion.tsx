@@ -24,21 +24,21 @@ const AccordionItem: FC<AccordionItemProps> = ({
   isOpen,
   toggle,
 }) => (
-  <div>
+  <div className="mb-4">
     <h2>
       <button
         type="button"
-        className={`flex items-center justify-between w-full p-5 font-medium rtl:text-right text-gray-500 border border-b-0 border-gray-200 ${
-          index === 0 ? "rounded-t-xl" : ""
-        } focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-800 dark:border-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 gap-3`}
+        className={`flex items-center justify-between w-full p-6 font-semibold text-left text-gray-800 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl transition-all duration-200 ${
+          isOpen ? "bg-[#f7c01b] text-black border-[#f7c01b]" : ""
+        } focus:outline-none focus:ring-2 focus:ring-[#2166fc] focus:ring-offset-2`}
         aria-expanded={isOpen}
         onClick={() => toggle(index)}
       >
-        <span>{question}</span>
+        <span className="text-lg">{question}</span>
         <svg
-          className={`w-3 h-3 transform transition-transform duration-200 ${
+          className={`w-5 h-5 transform transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
-          } shrink-0`}
+          } shrink-0 ${isOpen ? "text-black" : "text-[#2166fc]"}`}
           aria-hidden="true"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -55,12 +55,10 @@ const AccordionItem: FC<AccordionItemProps> = ({
       </button>
     </h2>
     {isOpen && (
-      <div
-        className={`p-5 border ${
-          index !== 2 ? "border-b-0" : ""
-        } border-gray-200 dark:border-gray-700 dark:bg-gray-900`}
-      >
-        {answer}
+      <div className="p-6 bg-white border border-gray-200 rounded-b-xl mt-2 shadow-sm">
+        <div className="text-gray-700 leading-relaxed">
+          {answer}
+        </div>
       </div>
     )}
   </div>
@@ -73,12 +71,12 @@ export const FAQAccordion: FC<FAQAccordionProps> = ({ data }) => {
 
   const toggle = (index: number) => {
     setOpenStates((prev) =>
-      prev.map((open, i) => (i === index ? !open : open))
+      prev.map((open, i) => (i === index ? !open : false))
     );
   };
 
   return (
-    <div id="accordion-collapse">
+    <div className="space-y-2">
       {data.map((item, index) => (
         <AccordionItem
           key={index}
