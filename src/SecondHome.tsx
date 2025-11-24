@@ -157,7 +157,7 @@
 //           <div className="md:w-1/2  p-6">
 //             <h2 className="text-4xl font-bold mb-4 playball">Host a fleet</h2>
 //             <p className="py-2 pb-8">
-//               Are you interested in hosting a UKrooze scooter fleet at your
+//               Are you interested in hosting a U Krooze scooter fleet at your
 //               venue, business, or next event? We would love to collaborate with
 //               you! Our scooters offer a fun and unique experience for your
 //               guests, making any occasion memorable and more accessible!

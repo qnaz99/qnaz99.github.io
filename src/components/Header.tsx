@@ -76,6 +76,10 @@ const routes = [
     path: "/support",
   },
   {
+    name: "Government Contracting",
+    path: "/government",
+  },
+  {
     name: "Host a Fleet",
     path: "/host-fleet",
   },

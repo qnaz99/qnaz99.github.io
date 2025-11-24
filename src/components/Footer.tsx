@@ -1,6 +1,6 @@
 const footerSections = [
   {
-    title: "UKRooze",
+    title: "U Krooze",
     links: [
       { label: "About", href: "#" },
       { label: "FAQ", href: "#" },
@@ -168,7 +168,7 @@ export function Footer() {
           <span className="text-sm text-white dark:white sm:text-center">
             © 2025{" "}
             <a href="#" className="hover:underline">
-              UKrooze
+              U Krooze
             </a>
             . All Rights Reserved.
           </span>
