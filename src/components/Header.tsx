@@ -36,13 +36,13 @@ const productPaths = [
     href: "/buy-scooter",
     icon: ShoppingCartIcon,
   },
-  {
-    name: "Buy a battery",
-    description:
-      "Buy a high quality replacement battery for your Pride Scooter",
-    href: "#",
-    icon: Battery100Icon,
-  },
+  // {
+  //   name: "Buy a battery",
+  //   description:
+  //     "Buy a high quality replacement battery for your Pride Scooter",
+  //   href: "#",
+  //   icon: Battery100Icon,
+  // },
 ];
 
 const callsToAction = [
