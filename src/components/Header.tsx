@@ -16,7 +16,7 @@ import {
 import {
   Bars3Icon,
   XMarkIcon,
-  Battery100Icon,
+  // Battery100Icon,
   DevicePhoneMobileIcon,
   ShoppingCartIcon,
 } from "@heroicons/react/24/outline";
