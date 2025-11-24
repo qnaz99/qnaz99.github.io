@@ -1,6 +1,7 @@
 "use client";
 import "../index.css";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Dialog,
   DialogPanel,
@@ -25,7 +26,7 @@ const productPaths = [
   {
     name: "Rent a scooter",
     description: "Use the UKrooze app to rent a Scooter nearby within minutes",
-    href: "/ukrooze/rent-scooter",
+    href: "/rent-scooter",
     icon: DevicePhoneMobileIcon,
     key: "rent",
   },
@@ -60,23 +61,27 @@ const routes = [
   },
   {
     name: "FAQ",
-    path: "/ukrooze/faq",
+    path: "/faq",
+  },
+  {
+    name: "Locations",
+    path: "/locations",
   },
   {
     name: "Rental Agreement",
-    path: "/ukrooze/rental-agreement",
+    path: "/rental-agreement",
   },
   {
     name: "Support",
-    path: "/ukrooze/support",
+    path: "/support",
   },
   {
     name: "Host a Fleet",
-    path: "/ukrooze/host-fleet",
+    path: "/host-fleet",
   },
   {
     name: "About Us",
-    path: "/ukrooze/about-us",
+    path: "/about-us",
   },
 ];
 
@@ -90,14 +95,14 @@ export default function Header() {
         className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8"
       >
         <div className="flex lg:flex-1">
-          <a href="/ukrooze/">
+          <Link to="/">
             <span className="sr-only">UKrooze</span>
             <img
               alt="UKrooze logo"
               src="./img/logo-raw.png"
               className="h-6 w-auto scale-250 fade-in-delayed pl-4 md:pl-0"
             />
-          </a>
+          </Link>
         </div>
         <div className="flex lg:hidden">
           <button
@@ -137,13 +142,13 @@ export default function Header() {
                               />
                             </div>
                             <div className="flex-auto">
-                              <a
-                                href={item.href}
+                              <Link
+                                to={item.href}
                                 className="block font-semibold text-gray-900"
                               >
                                 {item.name}
                                 <span className="absolute inset-0" />
-                              </a>
+                              </Link>
                               <p className="mt-1 text-gray-600">
                                 {item.description}
                               </p>
@@ -151,9 +156,9 @@ export default function Header() {
                           </div>
                           {item.key === "rent" && (
                             <div className="divide-gray-900/5 bg-gray-50">
-                              <a
+                              <Link
                                 key={callsToAction[0].name}
-                                href={callsToAction[0].href}
+                                to={callsToAction[0].href}
                                 className="flex items-center justify-center gap-x-2.5 p-3 text-sm/6 font-semibold text-gray-900 hover:bg-gray-100"
                               >
                                 <DemoIcon
@@ -161,7 +166,7 @@ export default function Header() {
                                   className="size-5 flex-none text-gray-400"
                                 />
                                 {callsToAction[0].name}
-                              </a>
+                              </Link>
                             </div>
                           )}
                         </div>
@@ -171,13 +176,13 @@ export default function Header() {
                 </PopoverPanel>
               </Popover>
             ) : (
-              <a
+              <Link
                 key={route.name}
-                href={route.path}
+                to={route.path}
                 className="fade-in-delayed text-sm/6 font-semibold text-[#023bb3]"
               >
                 {route.name}
-              </a>
+              </Link>
             )
           )}
         </PopoverGroup>
@@ -191,14 +196,14 @@ export default function Header() {
         <div className="fixed inset-0 z-10" />
         <DialogPanel className="fixed inset-y-0 right-0 z-10 w-full overflow-y-auto bg-[#d9aa1e] px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
           <div className="flex items-center justify-between">
-            <a href="#" className="-m-1.5 p-1.5">
+            <Link to="/" className="-m-1.5 p-1.5">
               <span className="sr-only">UKrooze</span>
               <img
                 alt=""
                 src="./img/logo.png"
                 className="h-8 w-auto scale-200 pl-2 fade-in-delayed"
               />
-            </a>
+            </Link>
             <button
               type="button"
               onClick={() => setMobileMenuOpen(false)}
@@ -225,9 +230,9 @@ export default function Header() {
                         {[...route.subPath, ...callsToAction].map((item) => (
                           <DisclosureButton
                             key={item.name}
-                            as="a"
-                            href={item.href}
-                            className="block rounded-lg py-2 pr-3 pl-6 text-sm/7 font-semibold text-gray-900 hover:bg-gray-50"
+                            as={Link}
+                            to={item.href}
+                            className="block rounded-lg py-2 pr-3 pl-6 text-sm/7 font-semibold text-gray-900 hover:bg-gray-100"
                           >
                             {item.name}
                           </DisclosureButton>
@@ -235,13 +240,13 @@ export default function Header() {
                       </DisclosurePanel>
                     </Disclosure>
                   ) : (
-                    <a
+                    <Link
                       key={route.name}
-                      href={route.path}
+                      to={route.path}
                       className="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
                     >
                       {route.name}
-                    </a>
+                    </Link>
                   )
                 )}
               </div>

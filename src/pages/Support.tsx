@@ -1,7 +1,55 @@
 import Header from "../components/Header";
 import { Footer } from "../components/Footer";
+import { useState } from "react";
 
 const Support = () => {
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setStatus("idle");
+    try {
+      const endpoint =
+        "https://script.google.com/macros/s/AKfycbxexwpcSUxtxJhAwLL7cSH6DbHpoGBoWmeMZe8EP2SSpdkbi6ybAcXY474BUcmhMjye/exec";
+
+      const data = new FormData();
+      data.append("name", form.name);
+      data.append("email", form.email);
+      data.append("subject", form.subject);
+      data.append("message", form.message);
+      data.append("ua", navigator.userAgent);
+
+      await fetch(endpoint, {
+        method: "POST",
+        body: data,
+        mode: "no-cors", // ensures submission even if CORS isn't configured
+      });
+
+      setStatus("success");
+      setForm({ name: "", email: "", subject: "", message: "" });
+    } catch (err) {
+      console.error(err);
+      setStatus("error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="bg-[#2166fc]">
       <Header />
@@ -70,14 +118,18 @@ const Support = () => {
               <h3 className="text-2xl font-semibold text-center mb-6 text-gray-800">
                 Send us a Message
               </h3>
-              <form className="space-y-6">
+              <form className="space-y-6" onSubmit={handleSubmit} noValidate>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Your Name
                   </label>
                   <input
                     type="text"
+                    name="name"
+                    value={form.name}
+                    onChange={handleChange}
                     placeholder="Enter your full name"
+                    required
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2166fc] focus:border-transparent transition-all duration-200"
                   />
                 </div>
@@ -88,7 +140,11 @@ const Support = () => {
                   </label>
                   <input
                     type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
                     placeholder="Enter your email address"
+                    required
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2166fc] focus:border-transparent transition-all duration-200"
                   />
                 </div>
@@ -99,7 +155,11 @@ const Support = () => {
                   </label>
                   <input
                     type="text"
+                    name="subject"
+                    value={form.subject}
+                    onChange={handleChange}
                     placeholder="What can we help you with?"
+                    required
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2166fc] focus:border-transparent transition-all duration-200"
                   />
                 </div>
@@ -109,18 +169,32 @@ const Support = () => {
                     Message
                   </label>
                   <textarea
+                    name="message"
+                    value={form.message}
+                    onChange={handleChange}
                     placeholder="Please describe your issue or question in detail..."
                     rows={5}
+                    required
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2166fc] focus:border-transparent transition-all duration-200 resize-none"
                   ></textarea>
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-[#2166fc] hover:bg-[#1a56d4] text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#2166fc] focus:ring-offset-2"
+                  disabled={loading}
+                  className="w-full bg-[#2166fc] hover:bg-[#1a56d4] text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#2166fc] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Send Message
+                  {loading ? "Sending..." : "Send Message"}
                 </button>
+
+                <div aria-live="polite" className="text-center">
+                  {status === "success" && (
+                    <p className="text-green-600 font-medium">Thanks! We received your message.</p>
+                  )}
+                  {status === "error" && (
+                    <p className="text-red-600 font-medium">Something went wrong. Please try again.</p>
+                  )}
+                </div>
               </form>
             </div>
           </div>

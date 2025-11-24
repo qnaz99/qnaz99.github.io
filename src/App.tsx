@@ -7,20 +7,19 @@ import Support from "./pages/Support.tsx";
 import RentalAgreement from "./pages/RentalAgreement.tsx";
 import AboutUs from "./pages/AboutUs.tsx";
 import RentScooter from "./pages/RentScooter.tsx";
+import Locations from "./pages/Locations.tsx";
 
 const App = () => {
   return (
     <Routes>
-      <Route path="/ukrooze/" element={<Home />} />
-      <Route path="/ukrooze/host-fleet" element={<HostFleet />} />
-      <Route path="/ukrooze/faq" element={<FAQ />} />
-      <Route path="/ukrooze/support" element={<Support />} />
-      <Route path="/ukrooze/rental-agreement" element={<RentalAgreement />} />
-      <Route path="/ukrooze/about-us" element={<AboutUs />} />
-      <Route path="/ukrooze/rent-scooter" element={<RentScooter />} />
-
-      {/* <Route path="/ukrooze/contact" element={<Contact />} /> */}
-      {/* <Route path="*" element={<NotFound />} /> */}
+      <Route path="/" element={<Home />} />
+      <Route path="/host-fleet" element={<HostFleet />} />
+      <Route path="/faq" element={<FAQ />} />
+      <Route path="/support" element={<Support />} />
+      <Route path="/rental-agreement" element={<RentalAgreement />} />
+      <Route path="/about-us" element={<AboutUs />} />
+      <Route path="/rent-scooter" element={<RentScooter />} />
+      <Route path="/locations" element={<Locations />} />
     </Routes>
   );
 };

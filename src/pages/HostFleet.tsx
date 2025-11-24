@@ -1,7 +1,58 @@
 import Header from "../components/Header";
 import { Footer } from "../components/Footer";
+import { useState } from "react";
 
 const HostFleet = () => {
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    business: "",
+    message: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setStatus("idle");
+    try {
+      const endpoint =
+        "https://script.google.com/macros/s/AKfycbxexwpcSUxtxJhAwLL7cSH6DbHpoGBoWmeMZe8EP2SSpdkbi6ybAcXY474BUcmhMjye/exec";
+
+      const data = new FormData();
+      data.append("form", "host");
+      data.append("firstName", form.firstName);
+      data.append("lastName", form.lastName);
+      data.append("email", form.email);
+      data.append("business", form.business);
+      data.append("message", form.message);
+      data.append("ua", navigator.userAgent);
+
+      await fetch(endpoint, {
+        method: "POST",
+        body: data,
+        mode: "no-cors",
+      });
+
+      setStatus("success");
+      setForm({ firstName: "", lastName: "", email: "", business: "", message: "" });
+    } catch (err) {
+      console.error(err);
+      setStatus("error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="bg-[#2166fc]">
       <Header />
@@ -54,7 +105,7 @@ const HostFleet = () => {
               <h3 className="text-2xl font-semibold text-center mb-6 text-gray-800">
                 Contact Us
               </h3>
-              <form className="space-y-6">
+              <form className="space-y-6" onSubmit={handleSubmit} noValidate>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -62,7 +113,11 @@ const HostFleet = () => {
                     </label>
                     <input
                       type="text"
+                      name="firstName"
+                      value={form.firstName}
+                      onChange={handleChange}
                       placeholder="Enter your first name"
+                      required
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2166fc] focus:border-transparent transition-all duration-200"
                     />
                   </div>
@@ -72,7 +127,11 @@ const HostFleet = () => {
                     </label>
                     <input
                       type="text"
+                      name="lastName"
+                      value={form.lastName}
+                      onChange={handleChange}
                       placeholder="Enter your last name"
+                      required
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2166fc] focus:border-transparent transition-all duration-200"
                     />
                   </div>
@@ -84,7 +143,11 @@ const HostFleet = () => {
                   </label>
                   <input
                     type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
                     placeholder="Enter your email address"
+                    required
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2166fc] focus:border-transparent transition-all duration-200"
                   />
                 </div>
@@ -95,7 +158,11 @@ const HostFleet = () => {
                   </label>
                   <input
                     type="text"
+                    name="business"
+                    value={form.business}
+                    onChange={handleChange}
                     placeholder="Enter your business or venue name"
+                    required
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2166fc] focus:border-transparent transition-all duration-200"
                   />
                 </div>
@@ -105,18 +172,32 @@ const HostFleet = () => {
                     Message
                   </label>
                   <textarea
+                    name="message"
+                    value={form.message}
+                    onChange={handleChange}
                     placeholder="Tell us about your venue and how we can help..."
                     rows={4}
+                    required
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2166fc] focus:border-transparent transition-all duration-200 resize-none"
                   ></textarea>
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-[#2166fc] hover:bg-[#1a56d4] text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#2166fc] focus:ring-offset-2"
+                  disabled={loading}
+                  className="w-full bg-[#2166fc] hover:bg-[#1a56d4] text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#2166fc] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Send Message
+                  {loading ? "Sending..." : "Send Message"}
                 </button>
+
+                <div aria-live="polite" className="text-center">
+                  {status === "success" && (
+                    <p className="text-green-600 font-medium">Thanks! We received your message.</p>
+                  )}
+                  {status === "error" && (
+                    <p className="text-red-600 font-medium">Something went wrong. Please try again.</p>
+                  )}
+                </div>
               </form>
             </div>
           </div>
