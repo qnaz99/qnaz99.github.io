@@ -33,7 +33,7 @@ const productPaths = [
   {
     name: "Buy a scooter",
     description: "Purchase one of our state-of-the-art Pride Scooters",
-    href: "#",
+    href: "/buy-scooter",
     icon: ShoppingCartIcon,
   },
   {

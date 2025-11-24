@@ -9,6 +9,8 @@ import AboutUs from "./pages/AboutUs.tsx";
 import RentScooter from "./pages/RentScooter.tsx";
 import Locations from "./pages/Locations.tsx";
 import GovernmentContracting from "./pages/GovernmentContracting.tsx";
+import BuyScooter from "./pages/BuyScooter.tsx";
+import ScooterDetail from "./pages/ScooterDetail.tsx";
 
 const App = () => {
   return (
@@ -22,6 +24,8 @@ const App = () => {
       <Route path="/rent-scooter" element={<RentScooter />} />
       <Route path="/locations" element={<Locations />} />
       <Route path="/government" element={<GovernmentContracting />} />
+      <Route path="/buy-scooter" element={<BuyScooter />} />
+      <Route path="/scooters/:slug" element={<ScooterDetail />} />
     </Routes>
   );
 };
