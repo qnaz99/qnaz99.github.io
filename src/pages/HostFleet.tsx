@@ -26,7 +26,7 @@ const HostFleet = () => {
     setStatus("idle");
     try {
       const endpoint =
-        "https://script.google.com/macros/s/AKfycbxexwpcSUxtxJhAwLL7cSH6DbHpoGBoWmeMZe8EP2SSpdkbi6ybAcXY474BUcmhMjye/exec";
+        "https://script.google.com/macros/s/AKfycbzgVYvgKe-smQ-XtnNBioE7NtJ9b1r1SoEdsaktT87L2LmMwOIZpsS7s6RvEFUF8mQ/exec";
 
       const data = new FormData();
       data.append("form", "host");
@@ -61,7 +61,7 @@ const HostFleet = () => {
       <section className="px-10 py-16">
         <div className="max-w-6xl mx-auto">
           <h1 className="section-title text-center playball text-5xl animate-fade-up mb-16 text-white">
-            Host a UKrooze Fleet
+            Host a U Krooze Fleet
           </h1>
           
           <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -72,7 +72,7 @@ const HostFleet = () => {
               </h2>
               <div className="w-16 h-1 bg-[#f7c01b] mb-6"></div>
               <p className="text-white text-lg leading-relaxed">
-                Are you interested in hosting a UKrooze scooter fleet at your venue, 
+                Are you interested in hosting a U Krooze scooter fleet at your venue, 
                 business, or next event? We would love to collaborate with you! 
                 Our scooters offer a fun and unique experience for your guests, 
                 making any occasion memorable and more accessible.

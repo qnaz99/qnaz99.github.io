@@ -25,7 +25,7 @@ const Support = () => {
     setStatus("idle");
     try {
       const endpoint =
-        "https://script.google.com/macros/s/AKfycbxexwpcSUxtxJhAwLL7cSH6DbHpoGBoWmeMZe8EP2SSpdkbi6ybAcXY474BUcmhMjye/exec";
+        "https://script.google.com/macros/s/AKfycbzgVYvgKe-smQ-XtnNBioE7NtJ9b1r1SoEdsaktT87L2LmMwOIZpsS7s6RvEFUF8mQ/exec";
 
       const data = new FormData();
       data.append("name", form.name);
