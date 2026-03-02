@@ -98,15 +98,26 @@ const ScooterDetail = () => {
               </div>
 
               <div className="mt-2 flex flex-col gap-2">
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center rounded-full bg-[#2166fc] px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#1a56d4] transition-colors cursor-pointer"
-                >
-                  Buy this scooter
-                </button>
+                {scooter.checkoutUrl ? (
+                  <a
+                    href={scooter.checkoutUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center rounded-full bg-[#2166fc] px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#1a56d4] transition-colors cursor-pointer"
+                  >
+                    Buy this scooter
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center rounded-full bg-[#2166fc] px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#1a56d4] transition-colors cursor-pointer"
+                  >
+                    Buy this scooter
+                  </button>
+                )}
                 <p className="text-xs text-gray-500">
                   Specifications and features are based on manufacturer-provided
-                  information and may vary by configuration. Once you place an order, 
+                  information and may vary by configuration. Once you place an order,
                   U Krooze will contact you to confirm the details and arrange shipment.
                 </p>
               </div>
