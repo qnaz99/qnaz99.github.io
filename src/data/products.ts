@@ -11,7 +11,7 @@ export type ScooterProduct = {
   description: string;
   highlights: string[];
   specs: ScooterSpec;
-  checkoutUrl?: string;
+  stripeProductId: string;
 };
 
 export const scooters: ScooterProduct[] = [
@@ -50,6 +50,7 @@ export const scooters: ScooterProduct[] = [
       ColorOptions:
         "White Camo, Black Camo, Desert Camo, Jungle Camo, Satin Aluminum, Dark Violet, Red, Peacock Blue, Sunflower",
     },
+    stripeProductId: "prod_TnpIlIIj12PaqH",
   },
   {
     id: "pursuit-2",
@@ -85,7 +86,7 @@ export const scooters: ScooterProduct[] = [
       Suspension: "Front and rear (CTS Suspension)",
       ColorOptions: "Gray (Matte), Orange, Black",
     },
-    checkoutUrl: "https://buy.stripe.com/14A00igr3fAb07mekX2wU07",
+    stripeProductId: "prod_TnpJZG1THoAgtM",
   },
   {
     id: "victory-10-4-wheel",
@@ -129,7 +130,7 @@ export const scooters: ScooterProduct[] = [
       Harness: "Auto-connecting front-to-rear harness",
       HCPCSCode: "K0801 - Group 1 Heavy Duty",
     },
-    checkoutUrl: "https://buy.stripe.com/fZu14mcaNbjV9HWccP2wU06",
+    stripeProductId: "prod_TnpO29UZFQUz0u",
   },
 ];
 

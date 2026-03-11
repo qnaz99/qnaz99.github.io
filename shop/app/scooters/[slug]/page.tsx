@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { scooters, getScooterBySlug } from "../../../data/products";
+import BuyNowForm from "./BuyNowForm";
 
 type Props = {
   params: { slug: string };
@@ -106,23 +107,7 @@ export default function ScooterDetailPage({ params }: Props) {
             </div>
 
             <div className="mt-2 flex flex-col gap-2">
-              {scooter.checkoutUrl ? (
-                <a
-                  href={scooter.checkoutUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
-                >
-                  Buy this scooter
-                </a>
-              ) : (
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
-                >
-                  Buy this scooter
-                </button>
-              )}
+              <BuyNowForm slug={scooter.slug} />
               <p className="text-xs text-gray-500">
                 Specifications and features are based on manufacturer-provided
                 information and may vary by configuration. Once you place an
