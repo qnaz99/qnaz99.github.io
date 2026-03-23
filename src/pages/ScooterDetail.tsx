@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import Header from "../components/Header";
 import { Footer } from "../components/Footer";
@@ -7,58 +7,12 @@ import { getScooterBySlug } from "../data/products";
 const ScooterDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const scooter = slug ? getScooterBySlug(slug) : undefined;
-  const [state, setState] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const checkoutApiUrl =
-    import.meta.env.VITE_CHECKOUT_API_URL ||
-    "/.netlify/functions/create-checkout-session";
 
   useEffect(() => {
     if (scooter) {
       document.title = `${scooter.name} | U Krooze`;
     }
   }, [scooter]);
-
-  const handleCheckout = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!scooter) return;
-
-    setError("");
-    setIsLoading(true);
-
-    try {
-      const response = await fetch(checkoutApiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          slug: scooter.slug,
-          address: {
-            country: "US",
-            state: state.toUpperCase(),
-            postalCode,
-          },
-        }),
-      });
-
-      const data = (await response.json()) as { url?: string; error?: string };
-
-      if (!response.ok || !data.url) {
-        throw new Error(data.error ?? "Unable to start checkout.");
-      }
-
-      window.location.href = data.url;
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unable to start checkout.";
-      setError(message);
-      setIsLoading(false);
-    }
-  };
 
   if (!scooter) {
     return (
@@ -144,37 +98,12 @@ const ScooterDetail = () => {
               </div>
 
               <div className="mt-2 flex flex-col gap-2">
-                <form onSubmit={handleCheckout} className="flex flex-col gap-2">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <input
-                      type="text"
-                      value={state}
-                      onChange={(e) => setState(e.target.value)}
-                      placeholder="State (e.g. FL)"
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                      maxLength={2}
-                      required
-                    />
-                    <input
-                      type="text"
-                      value={postalCode}
-                      onChange={(e) => setPostalCode(e.target.value)}
-                      placeholder="ZIP Code"
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-                      required
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="inline-flex items-center justify-center rounded-full bg-[#2166fc] px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#1a56d4] transition-colors cursor-pointer disabled:opacity-60"
-                  >
-                    {isLoading ? "Redirecting..." : "Buy this scooter"}
-                  </button>
-                </form>
-
-                {error && <p className="text-xs text-red-600">{error}</p>}
+                <Link
+                  to={`/checkout/${scooter.slug}`}
+                  className="inline-flex items-center justify-center rounded-full bg-[#2166fc] px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#1a56d4] transition-colors cursor-pointer"
+                >
+                  Buy this scooter
+                </Link>
                 <p className="text-xs text-gray-500">
                   Specifications and features are based on manufacturer-provided
                   information and may vary by configuration. Once you place an order,

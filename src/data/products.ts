@@ -5,6 +5,7 @@ export type ScooterProduct = {
   slug: string;
   name: string;
   brand: string;
+  weightInLbs: number;
   thumbnailImage: string;
   heroImage?: string;
   shortDescription: string;
@@ -20,6 +21,7 @@ export const scooters: ScooterProduct[] = [
     slug: "px4",
     name: "PX4",
     brand: "Pride Mobility",
+    weightInLbs: 351.4,
     thumbnailImage:
       "https://www.pridemobility.com/pride-mobility-scooters/px4/images/color-selector/px4-black-camo.jpg",
     heroImage:
@@ -57,6 +59,7 @@ export const scooters: ScooterProduct[] = [
     slug: "pursuit-2",
     name: "Pursuit 2",
     brand: "Pride Mobility",
+    weightInLbs: 242.6,
     thumbnailImage:
       "https://www.pridemobility.com/pride-mobility-scooters/pursuit-2/images/color-selector/pursuit-2-black.jpg",
     heroImage:
@@ -93,6 +96,7 @@ export const scooters: ScooterProduct[] = [
     slug: "victory-10-4-wheel",
     name: "Victory 10 4-Wheel",
     brand: "Pride Mobility",
+    weightInLbs: 185,
     thumbnailImage:
       "https://www.pridemobility.com/pride-mobility-scooters/victory-10-4-wheel/images/color-selector/victory-10-4w-candy-apple-red.jpg",
     heroImage:

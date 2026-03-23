@@ -5,10 +5,20 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
 });
 
 const US_ONLY = ["US"];
-const SHIPPING_OUTSIDE_US_CENTS = 39900;
-const SHIPPING_AK_HI_CENTS = 34900;
-const SHIPPING_STANDARD_US_CENTS = 24900;
 const FREE_RADIUS_MILES = Number(process.env.FREE_DELIVERY_RADIUS_MILES || 30);
+const FEDEX_TIMEOUT_MS = Number(process.env.FEDEX_TIMEOUT_MS || 15000);
+const FEDEX_TOKEN_BUFFER_SECONDS = 60;
+
+const SCOOTER_WEIGHT_LBS_BY_SLUG = {
+  px4: 351.4,
+  "pursuit-2": 242.6,
+  "victory-10-4-wheel": 185,
+};
+
+let fedexTokenCache = {
+  accessToken: null,
+  expiresAtEpochMs: 0,
+};
 
 function json(statusCode, payload) {
   return {
@@ -77,17 +87,13 @@ async function geocodeZipToCoords(address) {
   return { lat, lng };
 }
 
-async function calculateShippingAmountCents(address) {
-  const state = (address.state || "").toUpperCase();
+function isLower48State(stateCode) {
+  const state = String(stateCode || "").toUpperCase();
+  if (!state || state.length !== 2) return false;
+  return !["AK", "HI", "PR", "VI", "GU", "AS", "MP"].includes(state);
+}
 
-  if (address.country !== "US") {
-    return SHIPPING_OUTSIDE_US_CENTS;
-  }
-
-  if (state === "AK" || state === "HI") {
-    return SHIPPING_AK_HI_CENTS;
-  }
-
+async function isWithinFreeDeliveryRadius(address) {
   const homeLat = Number(process.env.ERIC_HOME_LAT);
   const homeLng = Number(process.env.ERIC_HOME_LONG);
   const hasHomeCoords = Number.isFinite(homeLat) && Number.isFinite(homeLng);
@@ -98,19 +104,291 @@ async function calculateShippingAmountCents(address) {
       if (destination) {
         const miles = haversineMiles(homeLat, homeLng, destination.lat, destination.lng);
         if (miles <= FREE_RADIUS_MILES) {
-          return 0;
+          return true;
         }
       } else {
-        console.warn("No destination coordinates found; using standard shipping.");
+        console.warn("No destination coordinates found; skipping free-radius rule.");
       }
     } catch (error) {
-      console.warn("Failed distance-based shipping lookup; using standard shipping.", error);
+      console.warn("Failed distance-based shipping lookup; skipping free-radius rule.", error);
     }
   } else {
-    console.warn("ERIC_HOME_LAT/ERIC_HOME_LONG not configured; using standard shipping.");
+    console.warn("ERIC_HOME_LAT/ERIC_HOME_LONG not configured; skipping free-radius rule.");
   }
 
-  return SHIPPING_STANDARD_US_CENTS;
+  return false;
+}
+
+function getFedexOriginAddress() {
+  const line1 = String(process.env.ERIC_HOME_ADDRESS || "").trim();
+  const city = String(process.env.ERIC_HOME_CITY || "").trim();
+  const stateOrProvinceCode = String(process.env.ERIC_HOME_STATE || "").trim().toUpperCase();
+  const postalCode = String(process.env.ERIC_HOME_POSTAL_CODE || "").trim();
+  const countryCode = "US";
+
+  if (!line1 || !city || !stateOrProvinceCode || !postalCode) {
+    throw new Error("FedEx origin address env variables are incomplete.");
+  }
+
+  return {
+    line1,
+    city,
+    stateOrProvinceCode,
+    postalCode,
+    countryCode,
+  };
+}
+
+async function fetchWithTimeout(url, options, timeoutMs) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function getFedexAccessToken() {
+  const now = Date.now();
+  if (fedexTokenCache.accessToken && fedexTokenCache.expiresAtEpochMs > now) {
+    return fedexTokenCache.accessToken;
+  }
+
+  const baseUrl = String(process.env.FEDEX_BASE_URL || "").trim();
+  const apiKey = String(process.env.FEDEX_API_KEY || "").trim();
+  const secretKey = String(process.env.FEDEX_SECRET_KEY || "").trim();
+  if (!baseUrl || !apiKey || !secretKey) {
+    throw new Error("FedEx credentials are missing. Check FEDEX_BASE_URL/API/SECRET.");
+  }
+
+  const body = new URLSearchParams({
+    grant_type: "client_credentials",
+    client_id: apiKey,
+    client_secret: secretKey,
+  });
+
+  const response = await fetchWithTimeout(
+    `${baseUrl.replace(/\/$/, "")}/oauth/token`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: body.toString(),
+    },
+    FEDEX_TIMEOUT_MS
+  );
+
+  const rawText = await response.text();
+  if (!response.ok) {
+    throw new Error(`FedEx auth failed (${response.status}): ${rawText}`);
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(rawText);
+  } catch {
+    throw new Error("FedEx auth returned non-JSON response.");
+  }
+
+  const accessToken = parsed && parsed.access_token;
+  const expiresIn = Number(parsed && parsed.expires_in);
+  if (!accessToken || !Number.isFinite(expiresIn)) {
+    throw new Error("FedEx auth response missing access_token/expires_in.");
+  }
+
+  fedexTokenCache = {
+    accessToken,
+    expiresAtEpochMs:
+      now + Math.max(0, expiresIn - FEDEX_TOKEN_BUFFER_SECONDS) * 1000,
+  };
+
+  return accessToken;
+}
+
+function buildFedexFreightRatePayload({ slug, address }) {
+  const accountNumber = String(process.env.FEDEX_ACCOUNT_NUMBER || "").trim();
+  const lengthInches = Number(process.env.SCOOTER_LENGTH_INCHES || 0);
+  const widthInches = Number(process.env.SCOOTER_WIDTH_INCHES || 0);
+  const heightInches = Number(process.env.SCOOTER_HEIGHT_INCHES || 0);
+  const weightLbs = Number(SCOOTER_WEIGHT_LBS_BY_SLUG[slug]);
+
+  if (!accountNumber) {
+    throw new Error("FEDEX_ACCOUNT_NUMBER is missing.");
+  }
+  if (
+    !Number.isFinite(lengthInches) ||
+    !Number.isFinite(widthInches) ||
+    !Number.isFinite(heightInches) ||
+    lengthInches <= 0 ||
+    widthInches <= 0 ||
+    heightInches <= 0
+  ) {
+    throw new Error(
+      "SCOOTER_LENGTH_INCHES/SCOOTER_WIDTH_INCHES/SCOOTER_HEIGHT_INCHES must be positive numbers."
+    );
+  }
+  if (!Number.isFinite(weightLbs) || weightLbs <= 0) {
+    throw new Error(`No valid weight configured for slug '${slug}'.`);
+  }
+
+  const origin = getFedexOriginAddress();
+
+  const destination = {
+    line1: String(address.line1 || "").trim(),
+    line2: String(address.line2 || "").trim(),
+    city: String(address.city || "").trim(),
+    stateOrProvinceCode: String(address.state || "").trim().toUpperCase(),
+    postalCode: String(address.postalCode || "").trim(),
+    countryCode: "US",
+  };
+
+  return {
+    accountNumber: { value: accountNumber },
+    rateRequestControlParameters: {
+      returnTransitTimes: true,
+    },
+    freightRequestedShipment: {
+      serviceType: "FEDEX_FREIGHT_ECONOMY",
+      shipper: {
+        address: {
+          streetLines: [origin.line1],
+          city: origin.city,
+          stateOrProvinceCode: origin.stateOrProvinceCode,
+          postalCode: origin.postalCode,
+          countryCode: origin.countryCode,
+        },
+      },
+      recipient: {
+        address: {
+          streetLines: destination.line2
+            ? [destination.line1, destination.line2]
+            : [destination.line1],
+          city: destination.city,
+          stateOrProvinceCode: destination.stateOrProvinceCode,
+          postalCode: destination.postalCode,
+          countryCode: destination.countryCode,
+          residential: true,
+        },
+      },
+      shippingChargesPayment: {
+        paymentType: "SENDER",
+      },
+      freightShipmentDetail: {
+        role: "SHIPPER",
+        accountNumber: { value: accountNumber },
+        fedExFreightBillingContactAndAddress: {
+          address: {
+            streetLines: [origin.line1],
+            city: origin.city,
+            stateOrProvinceCode: origin.stateOrProvinceCode,
+            postalCode: origin.postalCode,
+            countryCode: origin.countryCode,
+          },
+        },
+        lineItem: [
+          {
+            freightClass: "CLASS_125",
+            handlingUnits: 1,
+            pieces: 1,
+            packaging: "PALLET",
+            weight: {
+              units: "LB",
+              value: weightLbs,
+            },
+            dimensions: {
+              length: Math.ceil(lengthInches),
+              width: Math.ceil(widthInches),
+              height: Math.ceil(heightInches),
+              units: "IN",
+            },
+          },
+        ],
+      },
+      requestedPackageLineItems: [
+        {
+          weight: {
+            units: "LB",
+            value: weightLbs,
+          },
+        },
+      ],
+      totalWeight: {
+        units: "LB",
+        value: weightLbs,
+      },
+    },
+  };
+}
+
+function extractFedexRateCents(rateResponse) {
+  const details = rateResponse?.output?.rateReplyDetails || [];
+  if (!Array.isArray(details) || details.length === 0) {
+    throw new Error("FedEx rate response had no rateReplyDetails.");
+  }
+
+  let bestUsdAmount = Number.POSITIVE_INFINITY;
+
+  for (const detail of details) {
+    const candidates = [
+      detail?.ratedShipmentDetails?.[0]?.totalNetCharge,
+      detail?.ratedShipmentDetails?.[0]?.totalBaseCharge,
+      detail?.ratedShipmentDetails?.[0]?.totalNetFedExCharge,
+      detail?.ratedShipmentDetails?.[0]?.totalFreightDiscounts,
+      detail?.totalNetCharge,
+    ];
+
+    for (const candidate of candidates) {
+      const amount = Number(candidate?.amount);
+      const currency = candidate?.currency;
+      if (Number.isFinite(amount) && amount >= 0 && currency === "USD") {
+        bestUsdAmount = Math.min(bestUsdAmount, amount);
+      }
+    }
+  }
+
+  if (!Number.isFinite(bestUsdAmount) || bestUsdAmount === Number.POSITIVE_INFINITY) {
+    throw new Error("FedEx rate response did not contain a USD total charge.");
+  }
+
+  return Math.round(bestUsdAmount * 100);
+}
+
+async function getFedexFreightShippingAmountCents({ slug, address }) {
+  const accessToken = await getFedexAccessToken();
+  const baseUrl = String(process.env.FEDEX_BASE_URL || "").trim().replace(/\/$/, "");
+  const path = String(
+    process.env.FEDEX_FREIGHT_RATE_PATH || "/rate/v1/freight/rates/quotes"
+  ).trim();
+  const payload = buildFedexFreightRatePayload({ slug, address });
+
+  const response = await fetchWithTimeout(
+    `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(payload),
+    },
+    FEDEX_TIMEOUT_MS
+  );
+
+  const rawText = await response.text();
+  if (!response.ok) {
+    throw new Error(`FedEx rate quote failed (${response.status}): ${rawText}`);
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(rawText);
+  } catch {
+    throw new Error("FedEx rate quote returned non-JSON response.");
+  }
+
+  return extractFedexRateCents(parsed);
 }
 
 exports.handler = async (event) => {
@@ -133,14 +411,24 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { slug, address } = JSON.parse(event.body || "{}");
+    const { slug, address, customer } = JSON.parse(event.body || "{}");
 
     if (!slug) {
       return json(400, { error: "Missing product slug." });
     }
 
-    if (!address || !address.country || !address.state || !address.postalCode) {
-      return json(400, { error: "Shipping country, state, and ZIP are required." });
+    if (
+      !address ||
+      !address.country ||
+      !address.state ||
+      !address.postalCode ||
+      !address.line1 ||
+      !address.city
+    ) {
+      return json(400, {
+        error:
+          "Shipping address, city, state, postal code, and country are required.",
+      });
     }
 
     const productMap = JSON.parse(process.env.STRIPE_PRODUCTS_JSON);
@@ -164,7 +452,30 @@ exports.handler = async (event) => {
       });
     }
 
-    const shippingAmountCents = await calculateShippingAmountCents(address);
+    const normalizedCountry = String(address.country || "").toUpperCase();
+    const normalizedState = String(address.state || "").toUpperCase();
+    if (normalizedCountry !== "US" || !isLower48State(normalizedState)) {
+      return json(400, {
+        error:
+          "We currently offer shipping only to addresses in the lower 48 states.",
+      });
+    }
+
+    const isFreeDelivery = await isWithinFreeDeliveryRadius({
+      ...address,
+      state: normalizedState,
+      country: normalizedCountry,
+    });
+    const shippingAmountCents = isFreeDelivery
+      ? 0
+      : await getFedexFreightShippingAmountCents({
+          slug,
+          address: {
+            ...address,
+            state: normalizedState,
+            country: normalizedCountry,
+          },
+        });
     const origin = event.headers.origin || `https://${event.headers.host}`;
     const lineItems = [
       {
@@ -186,21 +497,63 @@ exports.handler = async (event) => {
       });
     }
 
-    const session = await stripe.checkout.sessions.create({
+    const firstName = (customer && customer.firstName ? customer.firstName : "").trim();
+    const lastName = (customer && customer.lastName ? customer.lastName : "").trim();
+    const fullName = `${firstName} ${lastName}`.trim();
+    const customerEmail = customer && customer.email ? String(customer.email).trim() : "";
+    const customerPhone = customer && customer.phone ? String(customer.phone).trim() : "";
+
+    let customerId = null;
+    if (customerEmail || customerPhone || fullName) {
+      const createdCustomer = await stripe.customers.create({
+        name: fullName || undefined,
+        email: customerEmail || undefined,
+        phone: customerPhone || undefined,
+        address: {
+          line1: String(address.line1),
+          line2: address.line2 ? String(address.line2) : undefined,
+          city: String(address.city),
+          state: String(address.state),
+          postal_code: String(address.postalCode),
+          country: String(address.country).toUpperCase(),
+        },
+        shipping: {
+          name: fullName || undefined,
+          address: {
+            line1: String(address.line1),
+            line2: address.line2 ? String(address.line2) : undefined,
+            city: String(address.city),
+            state: String(address.state),
+            postal_code: String(address.postalCode),
+            country: String(address.country).toUpperCase(),
+          },
+          phone: customerPhone || undefined,
+        },
+      });
+      customerId = createdCustomer.id;
+    }
+
+    const sessionParams = {
       mode: "payment",
       line_items: lineItems,
       shipping_address_collection: {
         allowed_countries: US_ONLY,
       },
+      customer: customerId || undefined,
+      customer_email: !customerId && customerEmail ? customerEmail : undefined,
       metadata: {
         scooter_slug: slug,
         shipping_state: address.state || "",
         shipping_postal_code: address.postalCode || "",
         shipping_amount_cents: String(shippingAmountCents),
+        shipping_city: address.city || "",
+        shipping_line1: address.line1 || "",
       },
       success_url: `${origin}/buy-scooter?checkout=success`,
       cancel_url: `${origin}/scooters/${slug}?checkout=cancelled`,
-    });
+    };
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     return json(200, { url: session.url });
   } catch (error) {

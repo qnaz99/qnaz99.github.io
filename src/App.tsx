@@ -11,6 +11,7 @@ import Locations from "./pages/Locations.tsx";
 import GovernmentContracting from "./pages/GovernmentContracting.tsx";
 import BuyScooter from "./pages/BuyScooter.tsx";
 import ScooterDetail from "./pages/ScooterDetail.tsx";
+import Checkout from "./pages/Checkout.tsx";
 
 const App = () => {
   return (
@@ -26,6 +27,7 @@ const App = () => {
       <Route path="/government" element={<GovernmentContracting />} />
       <Route path="/buy-scooter" element={<BuyScooter />} />
       <Route path="/scooters/:slug" element={<ScooterDetail />} />
+      <Route path="/checkout/:slug" element={<Checkout />} />
     </Routes>
   );
 };
