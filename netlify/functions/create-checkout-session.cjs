@@ -250,7 +250,6 @@ function buildFedexFreightRatePayload({ slug, address }) {
       returnTransitTimes: true,
     },
     freightRequestedShipment: {
-      serviceType: "FEDEX_FREIGHT_ECONOMY",
       shipper: {
         address: {
           streetLines: [origin.line1],
@@ -269,11 +268,15 @@ function buildFedexFreightRatePayload({ slug, address }) {
           stateOrProvinceCode: destination.stateOrProvinceCode,
           postalCode: destination.postalCode,
           countryCode: destination.countryCode,
-          residential: true,
         },
       },
       shippingChargesPayment: {
         paymentType: "SENDER",
+        payor: {
+          responsibleParty: {
+            accountNumber: { value: accountNumber },
+          },
+        },
       },
       freightShipmentDetail: {
         role: "SHIPPER",
@@ -305,18 +308,6 @@ function buildFedexFreightRatePayload({ slug, address }) {
             },
           },
         ],
-      },
-      requestedPackageLineItems: [
-        {
-          weight: {
-            units: "LB",
-            value: weightLbs,
-          },
-        },
-      ],
-      totalWeight: {
-        units: "LB",
-        value: weightLbs,
       },
     },
   };
@@ -378,6 +369,30 @@ async function getFedexFreightShippingAmountCents({ slug, address }) {
 
   const rawText = await response.text();
   if (!response.ok) {
+    let parsedError;
+    try {
+      parsedError = JSON.parse(rawText);
+    } catch {
+      parsedError = null;
+    }
+
+    const firstError = parsedError?.errors?.[0];
+    const errorCode = firstError?.code;
+    const errorMessage = firstError?.message;
+    const firstParam = firstError?.parameterList?.[0];
+    const detail =
+      firstParam && firstParam.key && firstParam.value
+        ? `${firstParam.key}: ${firstParam.value}`
+        : null;
+
+    if (errorCode || errorMessage || detail) {
+      throw new Error(
+        `FedEx rate quote failed (${response.status}) [${errorCode || "UNKNOWN"}] ${
+          errorMessage || "No message"
+        }${detail ? ` | ${detail}` : ""}`
+      );
+    }
+
     throw new Error(`FedEx rate quote failed (${response.status}): ${rawText}`);
   }
 
